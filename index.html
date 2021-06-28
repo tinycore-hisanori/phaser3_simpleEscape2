@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.min.js"></script>
+    <script src="localforage.js"></script>
+    <script src="messageBox.js"></script>
+    <script src="selectBox.js"></script>
+  </head>
+  <body>
+    <script>
+      class titleScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "titleScene", active: true });
+        }
+        preload() {
+          this.load.image("titleBG", "./title_bg.png");
+        }
+        create() {
+          bg001 = this.add.tileSprite(400, 300, 800, 600, "titleBG");
+          /*          
+          let text = this.add
+            .text(60, 100, " Escape & Slot Game")
+            .setFontSize(56)
+            .setColor("#ff0");
+          */
+          let clickButton = this.add.text(200, 300, "START TO CLICK", {
+            fill: "#0f0"
+          });
+          clickButton.setStroke("#0000ff", 4);
+          clickButton.setFontSize("40px");
+          clickButton.setInteractive();
+          clickButton.on("pointerdown", () => {
+            this.scene.start("MyScene1");
+          });
+        }
+      }
+      class MyScene1 extends Phaser.Scene {
+        constructor() {
+          super({ key: "MyScene1", active: false });
+        }
+        preload() {
+          this.load.image("openedRoom1", "./800x600_openedRoom01.png");
+          this.load.image("nomalRoom1", "./800x600_room01.png");
+          this.load.image("imgLeft", "./80x90_gotoLeft.png");
+          this.load.image("imgRight", "./80x90_gotoRight.png");
+          this.load.audio("bgm_normal", "bgm_horror.mp3");
+        }
+        create() {
+          if (bgm == null) {
+            bgm = this.sound.add("bgm_normal");
+            bgm.play();
+          }
+          if (bDoorOpen == true) {
+            bg001 = this.add.tileSprite(400, 300, 800, 600, "openedRoom1");
+          } else {
+            bg001 = this.add.tileSprite(400, 300, 800, 600, "nomalRoom1");
+          }
+          btnLeft = this.add.sprite(50, 200, "imgLeft").setInteractive();
+          btnRight = this.add.sprite(750, 200, "imgRight").setInteractive();
+          btnLeft.on(
+            "pointerdown",
+            function (pointer) {
+              this.scene.start("SlotScene");
+            },
+            this
+          );
+          btnRight.on(
+            "pointerdown",
+            function (pointer) {
+              this.scene.start("SlotScene");
+            },
+            this
+          );
+          msgBox = new messageBox(this);
+          this.input.on("pointerdown", function (pointer) {
+            var touchX = pointer.x;
+            var touchY = pointer.y;
+            console.log("x=" + touchX + ",y=" + touchY);
+            if (messageMode == 0) {
+              //ドアを調べる
+              if (
+                touchX >= 300 &&
+                touchY >= 255 &&
+                touchX <= 415 &&
+                touchY <= 515
+              ) {
+                if (bDoorOpen == false) {
+                  messageMode = 1;
+                } else {
+                  messageMode = 2;
+                }
+              } else if (
+                //本棚を調べる
+                touchX >= 600 &&
+                touchY >= 240 &&
+                touchX <= 730 &&
+                touchY <= 400
+              ) {
+                messageMode = 3;
+              }
+            }
+            if (messageMode != 0) {
+              switch (messageMode) {
+                case 1:
+                  msgBox.show("俺", "ドアは固く閉ざされている・・・");
+                  messageMode = 99;
+                  break;
+                case 2:
+                  msgBox.show("俺", "これで寝室に入れるぞ！");
+                  messageMode = 90;
+                  break;
+                case 3:
+                  msgBox.show(
+                    "俺",
+                    "「ドアを開けるには３つのオレンジが必要」\r\nと書いてある。なんのことだろう。"
+                  );
+                  messageMode = 99;
+                  break;
+                case 90:
+                  msgBox.show("", "ゲームクリア");
+                  btnLeft.visible = false;
+                  btnRight.visible = false;
+                  if (bgm != null) {
+                    bgm.stop();
+                  }
+                  break;
+                case 99:
+                  msgBox.hide();
+                  messageMode = 0;
+                  break;
+              }
+            }
+          });
+          messageMode = 0;
+        }
+        update() {}
+      }
+      class SlotScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "SlotScene", active: false });
+        }
+        preload() {
+          this.load.image("room2", "./800x600_room02.png");
+          this.load.image("imgLeft", "./80x90_gotoLeft.png");
+          this.load.image("imgRight", "./80x90_gotoRight.png");
+          this.load.image("imgStart", "./200x60_start.png");
+          this.load.image("imgStop", "./60x60_stop.png");
+          this.load.spritesheet("imgSlot", "./240x80_slotRoll.png", {
+            frameWidth: 80,
+            frameHeight: 80
+          });
+          this.load.audio("seOK", "seOK.mp3");
+          this.load.audio("seNG", "seNG.mp3");
+        }
+
+        create() {
+          bg001 = this.add.tileSprite(400, 300, 800, 600, "room2");
+          btnLeft = this.add.sprite(50, 200, "imgLeft").setInteractive();
+          btnRight = this.add.sprite(750, 200, "imgRight").setInteractive();
+          btnLeft.on(
+            "pointerdown",
+            function (pointer) {
+              this.scene.start("MyScene1");
+            },
+            this
+          );
+          btnRight.on(
+            "pointerdown",
+            function (pointer) {
+              this.scene.start("MyScene1");
+            },
+            this
+          );
+
+          var btnStart = this.add.sprite(400, 100, "imgStart").setInteractive();
+          btnStart.on(
+            "pointerdown",
+            function (pointer) {
+              bSlotStarting = true;
+              bSlotRolling1 = true;
+              bSlotRolling2 = true;
+              bSlotRolling3 = true;
+            },
+            this
+          );
+
+          aniSlot1 = this.add.sprite(200, 250, "imgSlot");
+          aniSlot2 = this.add.sprite(400, 250, "imgSlot");
+          aniSlot3 = this.add.sprite(600, 250, "imgSlot");
+          aniSlot1.setFrame(0);
+          aniSlot2.setFrame(1);
+          aniSlot3.setFrame(2);
+
+          bSlotStarting = false;
+          bSlotRolling1 = false;
+          bSlotRolling2 = false;
+          bSlotRolling3 = false;
+
+          var btnStop1 = this.add.sprite(200, 450, "imgStop").setInteractive();
+          var btnStop2 = this.add.sprite(400, 450, "imgStop").setInteractive();
+          var btnStop3 = this.add.sprite(600, 450, "imgStop").setInteractive();
+
+          btnStop1.on("pointerdown", function (pointer) {
+            bSlotRolling1 = false;
+            checkRoll();
+          });
+          btnStop2.on("pointerdown", function (pointer) {
+            bSlotRolling2 = false;
+            checkRoll();
+          });
+          btnStop3.on("pointerdown", function (pointer) {
+            bSlotRolling3 = false;
+            checkRoll();
+          });
+
+          msgBox = new messageBox(this);
+          this.input.on("pointerdown", function (pointer) {
+            var touchX = pointer.x;
+            var touchY = pointer.y;
+            console.log("x=" + touchX + ",y=" + touchY);
+            switch (messageMode) {
+              case 1:
+                msgBox.show("俺", "ん？向こうでドアが開いた音がした!!");
+                messageMode = 99;
+                break;
+              case 2:
+                msgBox.show("俺", "はずれてしまった!!残念!!");
+                messageMode = 99;
+                break;
+              case 3:
+                msgBox.show(
+                  "俺",
+                  "揃った!...けど何も起こらないな。なぜだろう。"
+                );
+                messageMode = 99;
+                break;
+              case 99:
+                msgBox.hide();
+                messageMode = 0;
+                break;
+            }
+          });
+          messageMode = 0;
+
+          seOK = this.sound.add("seOK");
+          seNG = this.sound.add("seNG");
+        }
+
+        update() {
+          if (bSlotStarting == true) {
+            timeCnt = timeCnt + 1;
+            if (timeCnt > 10) {
+              timeCnt = 0;
+
+              if (bSlotRolling1 == true) {
+                nSlotNo1 = (nSlotNo1 + 1) % 3;
+                aniSlot1.setFrame(nSlotNo1);
+              }
+              if (bSlotRolling2 == true) {
+                nSlotNo2 = (nSlotNo2 + 1) % 3;
+                aniSlot2.setFrame(nSlotNo2);
+              }
+              if (bSlotRolling3 == true) {
+                nSlotNo3 = (nSlotNo3 + 1) % 3;
+                aniSlot3.setFrame(nSlotNo3);
+              }
+            }
+          }
+        }
+      }
+
+      function checkRoll() {
+        console.log(
+          "1=" + bSlotRolling1 + ",2=" + bSlotRolling2 + ",3=" + bSlotRolling3
+        );
+        if (
+          bSlotRolling1 == false &&
+          bSlotRolling2 == false &&
+          bSlotRolling3 == false
+        ) {
+          if (nSlotNo1 == nSlotNo2 && nSlotNo1 == nSlotNo3) {
+            seOK.play();
+            if (nSlotNo1 == 2) {
+              messageMode = 1;
+              bDoorOpen = true;
+            } else {
+              messageMode = 3;
+            }
+          } else {
+            seNG.play();
+            messageMode = 2;
+          }
+        }
+      }
+
+      var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        backgroundColor: "#4488aa",
+        audio: { disableWebAudio: true },
+        scene: [titleScene, MyScene1, SlotScene]
+      };
+      var bDoorOpen = false;
+      var bSlotStarting = false;
+      var bSlotRolling1 = false,
+        bSlotRolling2 = false,
+        bSlotRolling3 = false;
+      var nSlotNo1 = 0,
+        nSlotNo2 = 0,
+        nSlotNo3 = 0;
+      var aniSlot1, aniSlot2, aniSlot3;
+      var msgBox, btnLeft, btnRight;
+      var bg001;
+      var messageMode = 0; //99=閉じる待ち
+      var timeCnt = 0;
+      var bgm = null;
+      var seOpen, seOK, seNG;
+      var game = new Phaser.Game(config);
+    </script>
+  </body>
+</html>
