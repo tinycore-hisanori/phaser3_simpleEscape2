@@ -48,7 +48,7 @@
         }
         create() {
           if (bgm == null) {
-            bgm = this.sound.add("bgm_normal");
+            bgm = this.sound.add("bgm_normal", { loop: true });
             bgm.play();
           }
           if (bDoorOpen == true) {
@@ -188,9 +188,9 @@
           aniSlot1 = this.add.sprite(200, 250, "imgSlot");
           aniSlot2 = this.add.sprite(400, 250, "imgSlot");
           aniSlot3 = this.add.sprite(600, 250, "imgSlot");
-          aniSlot1.setFrame(0);
-          aniSlot2.setFrame(1);
-          aniSlot3.setFrame(2);
+          aniSlot1.setFrame(nSlotNo1);
+          aniSlot2.setFrame(nSlotNo2);
+          aniSlot3.setFrame(nSlotNo3);
 
           bSlotStarting = false;
           bSlotRolling1 = false;
